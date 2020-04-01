@@ -1,6 +1,5 @@
 class TextMeta:
     infos = {}
-    niceDisplayableInfo = ""
     
     def readChunk(self, f, datalen):
         print("TEXT")
@@ -24,7 +23,12 @@ class TextMeta:
 
 
     def __str__(self):
+        niceDisplayableInfo = ""
         for(key, value) in self.infos.items():
-            self.niceDisplayableInfo += key + " :: " + value + "\n"
+            niceDisplayableInfo += key + " :: " + value + "\n"
 
-        return self.niceDisplayableInfo
+        return niceDisplayableInfo
+
+    def clear(self):
+        self.infos.clear()
+        

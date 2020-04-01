@@ -1,14 +1,11 @@
 from enum import IntEnum
-import png
+
+from cv2 import cv2
+import numpy as np
+from matplotlib import pyplot as plt
 
 import AncillaryChunks as AC
 import CriticalChunks as CC
-
-
-def readTillEnd(datalen):
-    for _ in range(datalen+4):
-        f.read(1)
-
 
 
 class HexTypes(IntEnum):
@@ -25,56 +22,89 @@ class HexTypes(IntEnum):
     PNG_EXIF = 0x65584966
 
         
+class ChunkReader:
 
-name = "aa.png"
-f = open(name, "rb")
+    name = ""
+
+    headInfo = CC.HeaderChunk()
+    palleteInfo = CC.PaletteChunk()
+
+    textInfo = AC.TextMeta()
 
 
-textInfo = AC.TextMeta()
-headInfo = CC.HeaderChunk()
-palleteInfo = CC.PaletteChunk()
+    def readPNG(self, name):
 
-if int.from_bytes(f.read(8), byteorder='big') == HexTypes.PNG_FILE:
+        self.name = name
+        self.f = open(self.name, "rb")
+        self.img = cv2.imread(self.name)
 
-    while True:
-        datalen = int.from_bytes(f.read(4), byteorder='big')
-        print("Incoming chunk's length: " + str(datalen))
-        chunkType = f.read(4)
+        self.headInfo.clear()
+        self.palleteInfo.clear()
 
-        if int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IHDR:
-            print("IHDR")
-            headInfo.readChunk(f, datalen)
+        self.textInfo.clear()
 
-        elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_PLTE:
-            print("IPLTE")
-            palleteInfo.readChunk(f, datalen)
-            
-        elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IDAT:
-            print("IDAT")
-            readTillEnd(datalen)
+        if int.from_bytes(self.f.read(8), byteorder='big') == HexTypes.PNG_FILE:
 
-        elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_END:
-            print("IEND")
-            break
-        
-        elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_EXIF:
-            print("EXIF")
-            readTillEnd(datalen)
+            while True:
+                datalen = int.from_bytes(self.f.read(4), byteorder='big')
+                print("Incoming chunk's length: " + str(datalen))
+                chunkType = self.f.read(4)
 
-        elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_TEXT:
-            textInfo.readChunk(f, datalen)
+                if int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IHDR:
+                    print("IHDR")
+                    self.headInfo.readChunk(self.f, datalen)
 
+                elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_PLTE:
+                    print("IPLTE")
+                    self.palleteInfo.readChunk(self.f, datalen)
+                    
+                elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IDAT:
+                    print("IDAT")
+                    self.readTillEnd(datalen)
+
+                elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_END:
+                    print("IEND")
+                    break
+                
+                elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_EXIF:
+                    print("EXIF")
+                    self.readTillEnd(datalen)
+
+                elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_TEXT:
+                    self.textInfo.readChunk(self.f, datalen)
+
+                else:
+                    self.readTillEnd(datalen)
+
+                print()
         else:
-            readTillEnd(datalen)
+            print("That's not even a PNG file!")
+        self.f.close()
 
-        print()
-else:
-    print("That's not even a PNG file!")
-f.close()
 
-print()
-print()
+    def readTillEnd(self, datalen):
+        for _ in range(datalen+4):
+            self.f.read(1)
 
-print(headInfo)
-print(palleteInfo)
-print(textInfo)
+    
+    def printImg(self):
+        cv2.imshow('Analyzed Image', self.img)
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+
+
+    def performFourier(self):
+        grayImg = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
+        f = np.fft.fft2(grayImg)
+        fshift = np.fft.fftshift(f)
+
+        mag, ang = cv2.cartToPolar(fshift.real, fshift.imag)
+        mag = 20*np.log(np.abs(mag))
+        ang = 20*np.log(np.abs(ang))
+
+        plt.subplot(121), plt.imshow(mag, cmap='gray')
+        plt.title('Magnitude of Fourier Transform'), plt.xticks([]), plt.yticks([])
+        plt.subplot(122), plt.imshow(ang, cmap='gray')
+        plt.title('Phase of Fourier Transform'), plt.xticks([]), plt.yticks([])
+        plt.show()
+        

@@ -43,6 +43,15 @@ class HeaderChunk:
                 "Filter Method: " + str(self.filterMethod) + " -----> " + "Filter method used: " + "Adaptive filtering with five basic filter types" + "\n"
                 "Interlace Method: " + str(self.interlaceMethod) + " -----> " + "Interlace method used: " + self.switchInterlaceMethod(self.interlaceMethod) + "\n")
 
+    def clear(self):
+        self.width = None
+        self.height = None
+        self.bitDepth = None
+        self.colorType = None
+        self.compressionMethod = None
+        self.filterMethod = None
+        self.interlaceMethod = None        
+
 class PaletteChunk:
     numberColors = None
 
@@ -55,3 +64,7 @@ class PaletteChunk:
 
     def __str__(self):
         return "Number of colors in palette: " + str(self.numberColors) + "\n"
+
+    def clear(self):
+        self.numberColors = None
+        
