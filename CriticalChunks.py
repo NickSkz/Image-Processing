@@ -39,7 +39,7 @@ class HeaderChunk:
                 "Height: " + str(self.height) + " -----> " + "Height: " + str(self.height) + "px" + "\n"
                 "Bit Depth: " + str(self.bitDepth) + " -----> " + "Number of bits per sample: " + str(self.bitDepth) + "\n"
                 "Color Type: " + str(self.colorType) + " -----> " + "Color type of the image: " + self.switchColorType(self.colorType) + "\n"
-                "Compression Method: " + str(self.compressionMethod) + " -----> " + "Compression method used: " + "Deflate/inflate compression with a 32K sliding window" + "\n"
+                "Compression Method: " + str(self.compressionMethod) + " -----> " + "Deflate/inflate compression with a 32K sliding window" + "\n"
                 "Filter Method: " + str(self.filterMethod) + " -----> " + "Filter method used: " + "Adaptive filtering with five basic filter types" + "\n"
                 "Interlace Method: " + str(self.interlaceMethod) + " -----> " + "Interlace method used: " + self.switchInterlaceMethod(self.interlaceMethod) + "\n")
 

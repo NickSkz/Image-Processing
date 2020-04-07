@@ -5,7 +5,7 @@ from tkinter import *
 class PNG_GUI:
 
     HEIGHT = 500
-    WIDTH = 600
+    WIDTH = 950
 
     reader = ChunkReader()
 
@@ -21,7 +21,7 @@ class PNG_GUI:
         self.displayLabel=Label(displayFrame, textvariable=self.textVar, bg='white')
         self.displayLabel.pack(side='top', fill='both', expand='true')
 
-        self.textVar.set("Hey Bitch!")
+        self.textVar.set("Hey!")
 
 
 
@@ -34,13 +34,13 @@ class PNG_GUI:
         self.displayCriticalButton = Button(frame, text="Display info from Critical Chunks", command=lambda: self.printCritical())
         self.displayCriticalButton.pack(side='top', fill='both', expand='true')
 
-        self.displayAncillaryButton = Button(frame, text="Display info from Ancillary Chunks (iTEXT, eXIF, SMTH)", command=lambda: self.printAncillary())
+        self.displayAncillaryButton = Button(frame, text="Display info from Ancillary Chunks (tEXt, zTXt, iTXt)", command=lambda: self.printAncillary())
         self.displayAncillaryButton.pack(side='top', fill='both', expand='true')
 
         self.fourierButton = Button(frame, text="Perform Fourier transform of the image", command=lambda: self.performFourier())
         self.fourierButton.pack(side='top', fill='both', expand='true')
 
-        self.inverseFourierButton = Button(frame, text="Perform inverse fourier transform of an image", command=self.printMessage)
+        self.inverseFourierButton = Button(frame, text="Perform Inverse Fourier Transform (from data given after Fourier Transform (mag, pha))", command=lambda: self.performInverseFourier())
         self.inverseFourierButton.pack(side='top', fill='both', expand='true')
 
         self.annonimizationButton = Button(frame, text="Annonimize Image (creates new image)", command=self.printMessage)
@@ -63,7 +63,7 @@ class PNG_GUI:
 
 
     def printMessage(self):
-        self.textVar.set("This is it Bitch!")
+        self.textVar.set("-_______-")
 
 
     def startProcessing(self, name):
@@ -81,14 +81,28 @@ class PNG_GUI:
 
 
     def printCritical(self):
-        self.textVar.set(str(self.reader.headInfo) + str(self.reader.palleteInfo))
+        self.textVar.set("*******************************************IHDR*******************************************\n" +
+        str(self.reader.headInfo) +
+        "\n*******************************************PLTE*******************************************\n" +
+        str(self.reader.palleteInfo))
 
 
     def printAncillary(self):
-        self.textVar.set(str(self.reader.textInfo))
+        self.textVar.set("*******************************************tEXt*******************************************\n" +
+        str(self.reader.textInfo) +
+        "\n*******************************************zTXt*******************************************\n" +
+        str(self.reader.ztextInfo) +
+        "\n*******************************************iTXt*******************************************\n" +
+        str(self.reader.itextInfo))
 
     def performFourier(self):
         self.reader.performFourier()
+
+    def performInverseFourier(self):
+        self.textVar.set(self.reader.performInverseFourier())
+
+    def performAnnonization(self):
+        self.reader.createAnnonymousImg()
 
 
 root = Tk()
