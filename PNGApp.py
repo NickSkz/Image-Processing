@@ -34,8 +34,14 @@ class PNG_GUI:
         self.displayCriticalButton = Button(frame, text="Display info from Critical Chunks", command=lambda: self.printCritical())
         self.displayCriticalButton.pack(side='top', fill='both', expand='true')
 
-        self.displayAncillaryButton = Button(frame, text="Display info from Ancillary Chunks (tEXt, zTXt, iTXt)", command=lambda: self.printAncillary())
-        self.displayAncillaryButton.pack(side='top', fill='both', expand='true')
+        self.BufferFrame = Frame(frame)
+        self.BufferFrame.pack(side='top', fill='both', expand='true')
+
+        self.displayAncillaryButton = Button(self.BufferFrame, text="Display info from Ancillary Chunks (tEXt, zTXt, iTXt)", command=lambda: self.printAncillary())
+        self.displayAncillaryButton.pack(side='left', fill='both', expand='true')
+
+        self.displayPalette = Button(self.BufferFrame, text="Display Palette (Indexed Images)", command=lambda: self.printPalette())
+        self.displayPalette.pack(side='right', fill='both', expand='true')
 
         self.fourierButton = Button(frame, text="Perform Fourier transform of the image", command=lambda: self.performFourier())
         self.fourierButton.pack(side='top', fill='both', expand='true')
@@ -43,7 +49,7 @@ class PNG_GUI:
         self.inverseFourierButton = Button(frame, text="Perform Inverse Fourier Transform (from data given after Fourier Transform (mag, pha))", command=lambda: self.performInverseFourier())
         self.inverseFourierButton.pack(side='top', fill='both', expand='true')
 
-        self.annonimizationButton = Button(frame, text="Annonimize Image (creates new image)", command=self.printMessage)
+        self.annonimizationButton = Button(frame, text="Annonimize Image (creates new image)", command=lambda: self.performAnnonization())
         self.annonimizationButton.pack(side='top', fill='both', expand='true')
 
 
@@ -79,12 +85,17 @@ class PNG_GUI:
         except FileNotFoundError:
             print("File not found!")
 
+    def printPalette(self):
+        self.reader.palleteInfo.showPalette()
+
 
     def printCritical(self):
         self.textVar.set("*******************************************IHDR*******************************************\n" +
         str(self.reader.headInfo) +
         "\n*******************************************PLTE*******************************************\n" +
-        str(self.reader.palleteInfo))
+        str(self.reader.palleteInfo) +
+        "\n******************************************IDAT*******************************************\n" +
+        str(self.reader.dataInfo)) 
 
 
     def printAncillary(self):

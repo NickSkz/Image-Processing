@@ -41,6 +41,7 @@ class ChunkReader:
 
     headInfo = CC.HeaderChunk()
     palleteInfo = CC.PaletteChunk()
+    dataInfo = CC.DataChunk()
 
     textInfo = AC.TextMeta()
     ztextInfo = AC.ZTextMeta()
@@ -55,6 +56,7 @@ class ChunkReader:
 
         self.headInfo.clear()
         self.palleteInfo.clear()
+        self.dataInfo.clear()
 
         self.textInfo.clear()
         self.ztextInfo.clear()
@@ -70,7 +72,7 @@ class ChunkReader:
 # Critical Chunks
 
                 if int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IHDR:
-                    print("IHDR")
+                    print("Incoming chunk's name: IHDR")
                     self.headInfo.readChunk(self.f, datalen)
 
                 elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_PLTE:
@@ -79,10 +81,11 @@ class ChunkReader:
                     
                 elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IDAT:
                     print("Incoming chunk's name: IDAT")
-                    self.readTillEnd(datalen)
+                    self.dataInfo.readChunk(self.f, datalen)
 
                 elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IEND:
                     print("Incoming chunk's name: IEND")
+                    self.readTillEnd(datalen)
                     break
                 
 # Ancillary Chunks
@@ -217,9 +220,46 @@ class ChunkReader:
 
 
     def createAnnonymousImg(self):
-        pass
+        fwrite = open("a" + self.name, "wb+")
+        f = open (self.name, "rb")
 
+        fwrite.write(f.read(8))
 
+        while(True):
+                datalenBytes = f.read(4)
+                datalen = int.from_bytes(datalenBytes, byteorder='big')
 
+                chunkTypeBytes = f.read(4)
+                chunkType = chunkTypeBytes
 
+# Critical Chunks
 
+                if int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IHDR:
+                    print("Incoming chunk's name: IHDR")
+                    fwrite.write(datalenBytes)
+                    fwrite.write(chunkTypeBytes)
+                    fwrite.write(f.read(datalen+4))
+
+                elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_PLTE:
+                    print("Incoming chunk's name: PLTE")
+                    fwrite.write(datalenBytes)
+                    fwrite.write(chunkTypeBytes)
+                    fwrite.write(f.read(datalen+4))
+                    
+                elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IDAT:
+                    print("Incoming chunk's name: IDAT")
+                    fwrite.write(datalenBytes)
+                    fwrite.write(chunkTypeBytes)
+                    fwrite.write(f.read(datalen+4))
+
+                elif int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IEND:
+                    print("Incoming chunk's name: IEND")
+                    fwrite.write(datalenBytes)
+                    fwrite.write(chunkTypeBytes)
+                    fwrite.write(f.read(datalen+4))
+                    break
+                else:
+                    f.read(datalen + 4)
+
+        fwrite.close()
+        f.close()                    
