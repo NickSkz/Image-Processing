@@ -3,12 +3,13 @@ from eMedia import *
 from tkinter import *
 
 class PNG_GUI:
-
+    #Parameters of the window
     HEIGHT = 500
     WIDTH = 950
-
+    #Initialize the Herz of the programm
     reader = ChunkReader()
 
+    #Initialize Tkinter window, another buttons, stuff like that
     def __init__(self, master):
         canvas = Canvas(master, height=self.HEIGHT, width=self.WIDTH)
         canvas.pack()
@@ -28,6 +29,8 @@ class PNG_GUI:
         frame = Frame(master)
         frame.place(relx=0, rely=0.2, relheight=0.8, relwidth=0.5)
 
+
+        #Main buttons - assign functions as lambda to buttons
         self.displayImage = Button(frame, text="Display Image", command=lambda: self.printImage())
         self.displayImage.pack(side='top', fill='both', expand='true')
 
@@ -46,14 +49,11 @@ class PNG_GUI:
         self.fourierButton = Button(frame, text="Perform Fourier transform of the image", command=lambda: self.performFourier())
         self.fourierButton.pack(side='top', fill='both', expand='true')
 
-        self.inverseFourierButton = Button(frame, text="Perform Inverse Fourier Transform (from data given after Fourier Transform (mag, pha))", command=lambda: self.performInverseFourier())
-        self.inverseFourierButton.pack(side='top', fill='both', expand='true')
-
         self.annonimizationButton = Button(frame, text="Annonimize Image (creates new image)", command=lambda: self.performAnnonization())
         self.annonimizationButton.pack(side='top', fill='both', expand='true')
 
 
-        
+        #Collect user input, output to the window
         entryFrame = Frame(master)
         entryFrame.place(relx=0, rely=0, relheight=0.2, relwidth=1)
 
@@ -67,28 +67,30 @@ class PNG_GUI:
         self.findImageButton.pack(side='left', fill='x', expand='true')
 
 
-
+    #-_______________________________________________________-
     def printMessage(self):
         self.textVar.set("-_______-")
 
-
+    #read the file, collect chunks info
     def startProcessing(self, name):
         try:
             self.reader.readPNG(name)
         except FileNotFoundError:
             print('Given file doesnt exist!')
 
-
+    #print image with open cv
     def printImage(self):
         try:
             self.reader.printImg()
         except FileNotFoundError:
             print("File not found!")
 
+    #show pallete if indexed img with matplotlib
     def printPalette(self):
-        self.reader.palleteInfo.showPalette()
+        if self.reader.palleteInfo.numberColors != None:
+            self.reader.palleteInfo.showPalette()
 
-
+    #print info bout critical chunks
     def printCritical(self):
         self.textVar.set("*******************************************IHDR*******************************************\n" +
         str(self.reader.headInfo) +
@@ -97,7 +99,7 @@ class PNG_GUI:
         "\n******************************************IDAT*******************************************\n" +
         str(self.reader.dataInfo)) 
 
-
+    #print info bout ancillary
     def printAncillary(self):
         self.textVar.set("*******************************************tEXt*******************************************\n" +
         str(self.reader.textInfo) +
@@ -105,17 +107,17 @@ class PNG_GUI:
         str(self.reader.ztextInfo) +
         "\n*******************************************iTXt*******************************************\n" +
         str(self.reader.itextInfo))
-
+    
+    #perform fourier
     def performFourier(self):
         self.reader.performFourier()
 
-    def performInverseFourier(self):
-        self.textVar.set(self.reader.performInverseFourier())
 
+    #delete not necessary chunks
     def performAnnonization(self):
         self.reader.createAnnonymousImg()
 
-
+#go with it 
 root = Tk()
 b = PNG_GUI(root)
 root.mainloop()

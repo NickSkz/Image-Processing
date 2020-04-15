@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 import AncillaryChunks as AC
 import CriticalChunks as CC
 
-
+#Assign hex to the most popular chunks header names
 class HexTypes(IntEnum):
     #PNG SIGNATURE CONSTANT
     PNG_FILE = 0x89504E470D0A1A0A
@@ -36,24 +36,25 @@ class HexTypes(IntEnum):
 
         
 class ChunkReader:
-
+    #name of the file
     name = ""
-
+    #3 objects connected to critical chunks
     headInfo = CC.HeaderChunk()
     palleteInfo = CC.PaletteChunk()
     dataInfo = CC.DataChunk()
-
+    #3 objects connected to ancillary chunks
     textInfo = AC.TextMeta()
     ztextInfo = AC.ZTextMeta()
     itextInfo = AC.ITextMeta()
 
-
+    #read image - most important function
     def readPNG(self, name):
-
+        # assign name of the file, file handler, as well read this with cv2
         self.name = name
         self.f = open(self.name, "rb")
         self.img = cv2.imread(self.name)
 
+        #clear all the garbage
         self.headInfo.clear()
         self.palleteInfo.clear()
         self.dataInfo.clear()
@@ -62,15 +63,19 @@ class ChunkReader:
         self.ztextInfo.clear()
         self.itextInfo.clear()
 
+        #check if png
         if int.from_bytes(self.f.read(8), byteorder='big') == HexTypes.PNG_FILE:
-
+            #until IEND occurs
             while True:
+                #get chunk length
                 datalen = int.from_bytes(self.f.read(4), byteorder='big')
                 print("Incoming chunk's length: " + str(datalen))
+                #get chunk type
                 chunkType = self.f.read(4)
 
 # Critical Chunks
 
+                #check what chunk, peform appropriate action defined in certain chunk class
                 if int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IHDR:
                     print("Incoming chunk's name: IHDR")
                     self.headInfo.readChunk(self.f, datalen)
@@ -159,73 +164,58 @@ class ChunkReader:
         self.f.close()
 
 
+    #read all whats left to go to next chunk
     def readTillEnd(self, datalen):
         for _ in range(datalen+4):
             self.f.read(1)
 
-    
+    #print it with cv2
     def printImg(self):
         cv2.imshow('Analyzed Image', self.img)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
 
-
+    #perform fourier - mag and phase
     def performFourier(self):
+        #to gray
         grayImg = cv2.cvtColor(self.img, cv2.COLOR_BGR2GRAY)
 
         self.grayImg = grayImg
 
+        #give freq transform and shift (cuz zero freq is in the cornern - we want it in the middle)
         f = np.fft.fft2(grayImg)
         fshift = np.fft.fftshift(f)
 
         self.fshift = fshift
 
+        #give magnitude and phase
         mag, ang = cv2.cartToPolar(fshift.real, fshift.imag)
 
         self.mag = mag
         self.ang = ang
 
+        #display it
         plt.subplot(221), plt.imshow(grayImg, cmap='gray')
         plt.title('Original Grayscale Image'), plt.xticks([]), plt.yticks([])
         plt.subplot(223), plt.imshow(20*np.log(np.abs(mag)), cmap='gray')
         plt.title('Magnitude of Fourier Transform'), plt.xticks([]), plt.yticks([])
-        plt.subplot(224), plt.imshow(20*np.log(np.abs(ang)), cmap='gray')
+        plt.subplot(224), plt.imshow(20*np.log(ang), cmap='gray')
         plt.title('Phase of Fourier Transform'), plt.xticks([]), plt.yticks([])
         plt.show()
-        
-
-    def performInverseFourier(self):
-        self.fshift.real, self.fshift.imag = cv2.polarToCart(self.mag, self.ang)
-
-        f_ishift = np.fft.ifftshift(self.fshift)
-        img_back = np.fft.ifft2(f_ishift)
-        img_back = np.abs(img_back)
 
 
-        plt.subplot(221), plt.imshow(20*np.log(np.abs(self.mag)), cmap='gray')
-        plt.title('Magnitude of Fourier Transform'), plt.xticks([]), plt.yticks([])
-        plt.subplot(222), plt.imshow(20*np.log(np.abs(self.ang)), cmap='gray')
-        plt.title('Phase of Fourier Transform'), plt.xticks([]), plt.yticks([])
-        plt.subplot(223),plt.imshow(self.grayImg, cmap = 'gray')
-        plt.title('Original Grayscale Image'), plt.xticks([]), plt.yticks([])
-        plt.subplot(224),plt.imshow(img_back, cmap = 'gray')
-        plt.title('Image from Fourier Transform'), plt.xticks([]), plt.yticks([])
-
-        plt.show()
-
-        if img_back.shape == self.grayImg.shape:
-            return "Image after fourier and refourier is the same as the original one!"
-        else:
-            return "Image after fourier and refourier differs from the original one!"
-
-
+    #annonymize image
     def createAnnonymousImg(self):
+        #open folder ares/
         fwrite = open("a" + self.name, "wb+")
         f = open (self.name, "rb")
 
+        #write png sig
         fwrite.write(f.read(8))
 
+        #while IEND
         while(True):
+                #write datalen, chunktype 
                 datalenBytes = f.read(4)
                 datalen = int.from_bytes(datalenBytes, byteorder='big')
 
@@ -234,6 +224,7 @@ class ChunkReader:
 
 # Critical Chunks
 
+                #only if critical write it to the file - len, name, whats inside
                 if int.from_bytes(chunkType, byteorder='big') == HexTypes.PNG_IHDR:
                     print("Incoming chunk's name: IHDR")
                     fwrite.write(datalenBytes)
@@ -259,6 +250,7 @@ class ChunkReader:
                     fwrite.write(f.read(datalen+4))
                     break
                 else:
+                    #read all whats not critical
                     f.read(datalen + 4)
 
         fwrite.close()
